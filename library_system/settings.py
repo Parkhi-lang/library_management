@@ -25,6 +25,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY','django-insecure-fallback-for-dev-only'
 DEBUG =  os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-ca99a.up.railway.app',
+]
 
 
 # Application definition
