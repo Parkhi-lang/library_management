@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register — LibraryOS{% endblock %}
+
+{% block content %}
+<div class="auth-box" style="max-width:500px;">
+
+  <div class="auth-logo">Library<span>OS</span></div>
+  <h1 class="auth-title">Create account</h1>
+  <p class="auth-subtitle">Register as a student to access the library</p>
+
+  <form method="post" action="">
+    {% csrf_token %}
+
+    <!-- Section 1: Account credentials -->
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label class="form-label">First Name</label>
+        {{ user_form.first_name }}
+        {% if user_form.first_name.errors %}
+          <div class="form-errors">{{ user_form.first_name.errors.0 }}</div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name</label>
+        {{ user_form.last_name }}
+        {% if user_form.last_name.errors %}
+          <div class="form-errors">{{ user_form.last_name.errors.0 }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      {{ user_form.username }}
+      {% if user_form.username.errors %}
+        <div class="form-errors">{{ user_form.username.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      {{ user_form.email }}
+      {% if user_form.email.errors %}
+        <div class="form-errors">{{ user_form.email.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        {{ user_form.password }}
+        {% if user_form.password.errors %}
+          <div class="form-errors">{{ user_form.password.errors.0 }}</div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        {{ user_form.password_confirm }}
+        {% if user_form.password_confirm.errors %}
+          <div class="form-errors">{{ user_form.password_confirm.errors.0 }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if user_form.non_field_errors %}
+      <div class="form-errors" style="margin-bottom:1rem;">
+        {{ user_form.non_field_errors.0 }}
+      </div>
+    {% endif %}
+
+    <!-- Section 2: Student profile details -->
+    <p class="form-section-title">Student Details</p>
+
+    <div class="form-group">
+      <label class="form-label">Roll Number</label>
+      {{ profile_form.roll_number }}
+      {% if profile_form.roll_number.errors %}
+        <div class="form-errors">{{ profile_form.roll_number.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label class="form-label">Semester</label>
+        {{ profile_form.semester }}
+        {% if profile_form.semester.errors %}
+          <div class="form-errors">{{ profile_form.semester.errors.0 }}</div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Branch</label>
+        {{ profile_form.branch }}
+        {% if profile_form.branch.errors %}
+          <div class="form-errors">{{ profile_form.branch.errors.0 }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">
+      Create Account
+    </button>
+  </form>
+
+  <div class="auth-footer">
+    Already registered? <a href="{% url 'accounts:login' %}">Sign in</a>
+  </div>
+
+</div>
+{% endblock %}

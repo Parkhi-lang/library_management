@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}My Books — LibraryOS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">My Semester Books</h1>
+  <p class="page-subtitle">
+    Prescribed books for Semester {{ profile.semester }} — {{ profile.branch }}
+  </p>
+</div>
+
+<!-- Search shortcut: submits to the search view -->
+<form class="search-form" method="get" action="{% url 'books:search' %}">
+  <input
+    class="search-input"
+    type="text"
+    name="q"
+    placeholder="Search by title, author, or subject..."
+    autocomplete="off"
+  >
+  <button type="submit" class="search-btn">Search</button>
+</form>
+
+<div class="stats-grid" style="grid-template-columns:repeat(2,1fr); margin-bottom:2rem;">
+  <div class="stat-card">
+    <div class="stat-number">{{ semester_books|length }}</div>
+    <div class="stat-label">Subjects This Semester</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ semester_books|length }}</div>
+    <div class="stat-label">Books in Catalog</div>
+  </div>
+</div>
+
+{% if semester_books %}
+  <div class="card">
+    <div class="card-header">Prescribed Books</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Book Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Availability</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sb in semester_books %}
+          <tr>
+            <td><span style="font-weight:500">{{ sb.subject_name }}</span></td>
+            <td>{{ sb.book.title }}</td>
+            <td style="color:var(--text-secondary)">{{ sb.book.author }}</td>
+            <td>
+              {% if sb.book.category %}
+                <span class="tag tag-blue">{{ sb.book.category }}</span>
+              {% else %}
+                <span style="color:var(--text-muted)">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if sb.book.is_available %}
+                <span class="badge badge-green">Available ({{ sb.book.available_copies }})</span>
+              {% else %}
+                <span class="badge badge-red">All Copies Borrowed</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">📖</div>
+      <div class="empty-state-text">
+        No books assigned to Semester {{ profile.semester }} — {{ profile.branch }} yet.
+      </div>
+      <div style="margin-top:1rem;">
+        <a href="{% url 'books:search' %}" class="btn btn-secondary btn-sm">Browse All Books</a>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

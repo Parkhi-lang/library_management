@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login — LibraryOS{% endblock %}
+
+{% block content %}
+<!--
+  The auth-page class is applied by base.html when the user is not authenticated.
+  It centers this box vertically and horizontally on the full screen.
+-->
+<div class="auth-box">
+
+  <div class="auth-logo">Library<span>OS</span></div>
+
+  <h1 class="auth-title">Welcome back</h1>
+  <p class="auth-subtitle">Sign in to access the library system</p>
+
+  <!--
+    action="" submits to the SAME URL (the login view).
+    method="post" sends data in the request body, not the URL.
+    GET would expose the password in the browser URL bar — never use GET for auth.
+  -->
+  <form method="post" action="">
+    {% csrf_token %}
+    <!--
+      {% csrf_token %} inserts a hidden input with a secret token.
+      Django checks this on every POST. Without it an attacker could trick
+      a logged-in user into submitting a form on another site (CSRF attack).
+    -->
+
+    <div class="form-group">
+      <label class="form-label" for="id_username">Username</label>
+      {{ form.username }}
+      <!--
+        {{ form.username }} renders the HTML input widget we defined in LoginForm.
+        Django automatically sets id="id_username" by convention.
+      -->
+      {% if form.username.errors %}
+        <div class="form-errors">{{ form.username.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="id_password">Password</label>
+      {{ form.password }}
+      {% if form.password.errors %}
+        <div class="form-errors">{{ form.password.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    {% if form.non_field_errors %}
+      <!--
+        non_field_errors holds errors that apply to the whole form.
+        AuthenticationForm puts "wrong credentials" here — not on a specific
+        field — so an attacker can't tell which one was wrong.
+      -->
+      <div class="form-errors" style="margin-bottom:1rem;">
+        {{ form.non_field_errors.0 }}
+      </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">Sign In</button>
+  </form>
+
+  <div class="auth-footer">
+    New student? <a href="{% url 'accounts:register' %}">Create an account</a>
+  </div>
+
+</div>
+{% endblock %}

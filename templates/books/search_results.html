@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if query %}Search: {{ query }}{% else %}Search Books{% endif %} — LibraryOS
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">Search Books</h1>
+  <p class="page-subtitle">Search by title, author, subject, or category</p>
+</div>
+
+<!-- Submits to itself — GET keeps query in URL -->
+<form class="search-form" method="get" action="">
+  <input
+    class="search-input"
+    type="text"
+    name="q"
+    value="{{ query }}"
+    placeholder="Search by title, author, subject..."
+    autofocus
+    autocomplete="off"
+  >
+  <!-- value="{{ query }}" keeps the box pre-filled after search -->
+  <button type="submit" class="search-btn">Search</button>
+</form>
+
+{% if query %}
+
+  <div style="margin-bottom:1.25rem; color:var(--text-secondary); font-size:0.9rem;">
+    {% if results %}
+      Found <strong style="color:var(--text-primary)">{{ results|length }}</strong>
+      result{{ results|length|pluralize }} for
+      "<strong style="color:var(--accent)">{{ query }}</strong>"
+      <!-- |pluralize outputs "s" if value != 1. "1 result" vs "3 results". -->
+    {% else %}
+      No results for "<strong style="color:var(--accent)">{{ query }}</strong>"
+    {% endif %}
+  </div>
+
+  {% if results %}
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Book Title</th>
+              <th>Author</th>
+              <th>Semester</th>
+              <th>Branch</th>
+              <th>Availability</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sb in results %}
+            <tr>
+              <td><span style="font-weight:500">{{ sb.subject_name }}</span></td>
+              <td>
+                {{ sb.book.title }}
+                {% if sb.book.category %}
+                  <br><span style="font-size:0.78rem;color:var(--text-muted)">{{ sb.book.category }}</span>
+                {% endif %}
+              </td>
+              <td style="color:var(--text-secondary)">{{ sb.book.author }}</td>
+              <td><span class="badge badge-purple">Sem {{ sb.semester }}</span></td>
+              <td style="color:var(--text-secondary);font-size:0.85rem;">{{ sb.branch }}</td>
+              <td>
+                {% if sb.book.is_available %}
+                  <span class="badge badge-green">{{ sb.book.available_copies }} available</span>
+                {% else %}
+                  <span class="badge badge-red">Unavailable</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-text">
+          No books found matching "{{ query }}".<br>
+          <span style="font-size:0.85rem;margin-top:0.5rem;display:block;color:var(--text-muted)">
+            Try a different title, author name, or subject.
+          </span>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <a href="{% url 'books:semester_books' %}" class="btn btn-secondary btn-sm">
+            View My Semester Books
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">📚</div>
+      <div class="empty-state-text">Type a title, author, subject, or category above to search.</div>
+      <div style="margin-top:1.5rem;">
+        <a href="{% url 'books:semester_books' %}" class="btn btn-secondary btn-sm">
+          View My Semester Books
+        </a>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

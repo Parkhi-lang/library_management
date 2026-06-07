@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}My Borrowed Books — LibraryOS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">My Borrowed Books</h1>
+  <p class="page-subtitle">Active borrows and borrow history</p>
+</div>
+
+{% if unpaid_fine > 0 %}
+<div class="fine-banner">
+  <span class="fine-banner-icon">⚠️</span>
+  <div class="fine-banner-text">
+    <div class="fine-banner-label">Outstanding Fine — Please pay at the library counter</div>
+    <div class="fine-banner-amount">₹{{ unpaid_fine }}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Active borrows -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <div class="card-header">Currently Borrowed ({{ active_borrows|length }})</div>
+
+  {% if active_borrows %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Book Title</th><th>Author</th><th>Borrowed On</th>
+            <th>Due Date</th><th>Status</th><th>Running Fine</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in active_borrows %}
+          <tr>
+            <td><span style="font-weight:500">{{ record.book.title }}</span></td>
+            <td style="color:var(--text-secondary)">{{ record.book.author }}</td>
+            <td style="color:var(--text-secondary)">{{ record.borrowed_date }}</td>
+            <td>
+              {% if record.days_overdue > 0 %}
+                <span style="color:var(--danger);font-weight:500">{{ record.due_date }}</span>
+              {% else %}{{ record.due_date }}{% endif %}
+            </td>
+            <td>
+              {% if record.days_overdue > 0 %}
+                <span class="badge badge-red">{{ record.days_overdue }} days overdue</span>
+              {% else %}
+                <span class="badge badge-green">On Time</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if record.current_fine_if_returned_today > 0 %}
+                <span style="color:var(--warning);font-weight:600">
+                  ₹{{ record.current_fine_if_returned_today }}
+                </span>
+              {% else %}
+                <span style="color:var(--text-muted)">₹0</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📗</div>
+      <div class="empty-state-text">No books currently borrowed.</div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Borrow history -->
+<div class="card">
+  <div class="card-header">Borrow History ({{ past_borrows|length }})</div>
+
+  {% if past_borrows %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Book Title</th><th>Author</th>
+            <th>Borrowed</th><th>Returned</th><th>Fine</th><th>Fine Paid</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in past_borrows %}
+          <tr>
+            <td>{{ record.book.title }}</td>
+            <td style="color:var(--text-secondary)">{{ record.book.author }}</td>
+            <td style="color:var(--text-secondary)">{{ record.borrowed_date }}</td>
+            <td style="color:var(--text-secondary)">{{ record.returned_date }}</td>
+            <td>
+              {% if record.fine_amount > 0 %}
+                <span style="color:var(--warning)">₹{{ record.fine_amount }}</span>
+              {% else %}<span style="color:var(--text-muted)">₹0</span>{% endif %}
+            </td>
+            <td>
+              {% if record.fine_amount == 0 %}
+                <span class="badge badge-green">No Fine</span>
+              {% elif record.fine_paid %}
+                <span class="badge badge-green">Paid</span>
+              {% else %}
+                <span class="badge badge-red">Unpaid</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-text">No borrow history yet.</div>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

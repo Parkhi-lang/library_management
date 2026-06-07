@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Overdue Alerts — LibraryOS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">Overdue Alerts</h1>
+  <p class="page-subtitle">Books past their due date — most overdue first</p>
+</div>
+
+<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:2rem;">
+  <div class="stat-card">
+    <div class="stat-number" style="color:var(--danger)">{{ records_annotated|length }}</div>
+    <div class="stat-label">Overdue Books</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" style="color:var(--warning)">₹{{ total_overdue_fine_preview }}</div>
+    <div class="stat-label">Total Fine if Returned Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ top_defaulters|length }}</div>
+    <div class="stat-label">Students with Overdue Books</div>
+  </div>
+</div>
+
+<!-- Two-column: main table (left) + defaulters sidebar (right) -->
+<div style="display:grid; grid-template-columns:1fr 280px; gap:1.5rem; align-items:start;">
+
+  <div class="card">
+    <div class="card-header" style="color:var(--danger);">⚠ All Overdue Records</div>
+    {% if records_annotated %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th><th>Roll No.</th><th>Book</th>
+              <th>Due Date</th><th>Days Overdue</th><th>Fine Preview</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in records_annotated %}
+            <!--
+              item is a dict: {'record': BorrowRecord, 'days_overdue': int, 'fine_preview': int}
+              Django dot notation works for dict keys: item.record = item['record']
+            -->
+            <tr>
+              <td>
+                <a href="{% url 'librarian:student_lookup' %}?roll={{ item.record.student.student_profile.roll_number }}"
+                   style="color:var(--accent);text-decoration:none;font-weight:500;">
+                  {{ item.record.student.get_full_name }}
+                </a>
+                <!-- Clicking name → student lookup page, pre-filled with roll number -->
+              </td>
+              <td style="font-family:monospace;font-size:0.85rem;color:var(--text-secondary);">
+                {{ item.record.student.student_profile.roll_number }}
+              </td>
+              <td>
+                <span style="font-weight:500">{{ item.record.book.title|truncatechars:35 }}</span><br>
+                <span style="font-size:0.78rem;color:var(--text-muted)">{{ item.record.book.author }}</span>
+              </td>
+              <td style="color:var(--danger);font-weight:500;">{{ item.record.due_date }}</td>
+              <td>
+                <!-- Severity coloring: 1-7d orange, 8-14d red, 15+d red + !! -->
+                {% if item.days_overdue >= 15 %}
+                  <span class="badge badge-red">{{ item.days_overdue }} days ‼</span>
+                {% elif item.days_overdue >= 8 %}
+                  <span class="badge badge-red">{{ item.days_overdue }} days</span>
+                {% else %}
+                  <span class="badge badge-orange">{{ item.days_overdue }} days</span>
+                {% endif %}
+              </td>
+              <td><span style="color:var(--warning);font-weight:600;">₹{{ item.fine_preview }}</span></td>
+              <td>
+                <a href="{% url 'circulation:return_book' item.record.id %}"
+                   class="btn btn-sm btn-secondary"
+                   onclick="return confirm('Mark as returned? Fine ₹{{ item.fine_preview }} will apply.')">
+                  Return
+                </a>
+                <!-- Confirm dialog includes the fine amount — no surprises -->
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <div class="empty-state-text">No overdue books right now!</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Defaulters sidebar -->
+  <div>
+    <div class="card">
+      <div class="card-header">Top Defaulters</div>
+      {% if top_defaulters %}
+        {% for item in top_defaulters %}
+        <!-- item dict: {'student': CustomUser, 'count': int} -->
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:0.75rem 0;border-bottom:1px solid var(--border);">
+          <div>
+            <a href="{% url 'librarian:student_lookup' %}?roll={{ item.student.student_profile.roll_number }}"
+               style="color:var(--text-primary);text-decoration:none;font-size:0.875rem;font-weight:500;">
+              {{ item.student.get_full_name }}
+            </a>
+            <div style="font-size:0.75rem;color:var(--text-muted);">
+              {{ item.student.student_profile.roll_number }}
+            </div>
+          </div>
+          <span class="badge badge-red" style="flex-shrink:0;">
+            {{ item.count }} book{{ item.count|pluralize }}
+            <!-- |pluralize: "1 book" vs "2 books" automatically -->
+          </span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="color:var(--text-muted);font-size:0.875rem;text-align:center;padding:1rem 0;">
+          No overdue students.
+        </div>
+      {% endif %}
+    </div>
+    <div style="margin-top:1rem;">
+      <a href="{% url 'librarian:dashboard' %}" class="btn btn-secondary" style="width:100%;">
+        ← Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

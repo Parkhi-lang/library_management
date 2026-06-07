@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Circulation Records — LibraryOS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">Circulation Records</h1>
+  <p class="page-subtitle">All borrow and return records</p>
+</div>
+
+<!-- Filter tabs — links with ?filter= GET param, no JS needed -->
+<div style="display:flex;gap:0.5rem;margin-bottom:1.75rem;">
+  <a href="?filter=active"
+     class="btn btn-sm {% if filter_type == 'active' %}btn-primary{% else %}btn-secondary{% endif %}"
+     style="width:auto;">Active</a>
+  <a href="?filter=overdue"
+     class="btn btn-sm {% if filter_type == 'overdue' %}btn-primary{% else %}btn-secondary{% endif %}"
+     style="width:auto;">Overdue</a>
+  <a href="?filter=all"
+     class="btn btn-sm {% if filter_type == 'all' %}btn-primary{% else %}btn-secondary{% endif %}"
+     style="width:auto;">All Records</a>
+</div>
+
+<div style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.875rem;">
+  {{ records|length }} record{{ records|length|pluralize }}
+</div>
+
+<div class="card">
+  {% if records %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th><th>Roll No.</th><th>Book</th>
+            <th>Borrowed</th><th>Due</th><th>Status</th><th>Fine</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in records %}
+          <tr>
+            <td>
+              <span style="font-weight:500">{{ record.student.get_full_name }}</span><br>
+              <span style="font-size:0.78rem;color:var(--text-muted)">@{{ record.student.username }}</span>
+            </td>
+            <td style="font-family:monospace;font-size:0.85rem;color:var(--text-secondary);">
+              {{ record.student.student_profile.roll_number }}
+              <!-- Zero extra DB query — fetched via select_related in view -->
+            </td>
+            <td>
+              {{ record.book.title }}<br>
+              <span style="font-size:0.78rem;color:var(--text-muted)">{{ record.book.author }}</span>
+            </td>
+            <td style="color:var(--text-secondary);font-size:0.85rem;">{{ record.borrowed_date }}</td>
+            <td style="font-size:0.85rem;">
+              {% if not record.is_returned and record.due_date < today %}
+                <span style="color:var(--danger)">{{ record.due_date }}</span>
+              {% else %}{{ record.due_date }}{% endif %}
+            </td>
+            <td>
+              {% if record.is_returned %}
+                <span class="badge badge-green">Returned</span>
+              {% elif record.due_date < today %}
+                <span class="badge badge-red">Overdue {{ record.days_overdue }}d</span>
+              {% else %}
+                <span class="badge badge-orange">Active</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if record.fine_amount > 0 %}
+                {% if record.fine_paid %}
+                  <span style="color:var(--success)">₹{{ record.fine_amount }} ✓</span>
+                {% else %}
+                  <span style="color:var(--warning)">₹{{ record.fine_amount }}</span>
+                {% endif %}
+              {% elif not record.is_returned and record.current_fine_if_returned_today > 0 %}
+                <span style="color:var(--warning);font-size:0.8rem;">
+                  ~₹{{ record.current_fine_if_returned_today }}
+                </span>
+                <!-- ~ signals this is a live estimate, not the charged amount -->
+              {% else %}
+                <span style="color:var(--text-muted)">₹0</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if not record.is_returned %}
+                <a href="{% url 'circulation:return_book' record.id %}"
+                   class="btn btn-sm btn-secondary"
+                   onclick="return confirm('Mark this book as returned?')">
+                  Return
+                </a>
+                <!-- confirm() shows browser dialog before navigating — prevents accidents -->
+              {% else %}
+                <span style="color:var(--text-muted);font-size:0.8rem;">Done</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-text">No records found for the selected filter.</div>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

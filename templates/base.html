@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}LibraryOS{% endblock %}</title>
+  <!--
+    display=swap means text shows in a fallback font while the custom
+    font loads — prevents invisible text on slow connections (FOIT).
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  
+</head>
+<body>
+
+  {% if user.is_authenticated %}
+  <nav class="navbar">
+    <a href="{% url 'accounts:role_redirect' %}" class="navbar-brand">
+      Library<span class="brand-dot">OS</span>
+    </a>
+
+    <div class="nav-links">
+      {% if user.role == 'librarian' %}
+        <a href="{% url 'librarian:dashboard' %}"      class="nav-link">Dashboard</a>
+        <a href="{% url 'librarian:student_lookup' %}" class="nav-link">Student Lookup</a>
+        <a href="{% url 'circulation:issue_book' %}"   class="nav-link">Issue Book</a>
+        <a href="{% url 'circulation:all_records' %}"  class="nav-link">Records</a>
+        <a href="{% url 'librarian:inventory' %}"      class="nav-link">Inventory</a>
+        <a href="{% url 'librarian:overdue_alerts' %}" class="nav-link">Overdue</a>
+      {% else %}
+        <a href="{% url 'accounts:student_profile' %}"       class="nav-link">My Profile</a>
+        <a href="{% url 'books:semester_books' %}"           class="nav-link">My Books</a>
+        <a href="{% url 'books:search' %}"                   class="nav-link">Search</a>
+        <a href="{% url 'circulation:my_borrowed_books' %}"  class="nav-link">Borrows</a>
+      {% endif %}
+      <div class="nav-divider"></div>
+      <a href="{% url 'accounts:logout' %}" class="btn-nav-logout">Logout</a>
+    
+
+      <div class="nav-divider"></div>
+      <a href="{% url 'accounts:logout' %}" class="btn-nav-logout">Logout</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <div {% if not user.is_authenticated %}class="auth-page"{% else %}class="container"{% endif %}>
+
+    {% if messages %}
+      <div class="messages-wrapper">
+        {% for message in messages %}
+          <!--
+            message.tags returns the level name: 'error', 'success', 'warning', 'info'.
+            We append it to 'alert-' to get the right CSS class.
+          -->
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+</body>
+</html>
+      

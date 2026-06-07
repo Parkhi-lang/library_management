@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — LibraryOS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">Dashboard</h1>
+  <p class="page-subtitle">
+    Welcome back, {{ user.get_full_name|default:user.username }}
+    <!-- |default: shows username if first/last name not set -->
+  </p>
+</div>
+
+<!-- Five stat cards -->
+<div class="stats-grid" style="grid-template-columns:repeat(5,1fr); margin-bottom:2rem;">
+  <div class="stat-card">
+    <div class="stat-number">{{ total_students }}</div>
+    <div class="stat-label">Students</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ total_books }}</div>
+    <div class="stat-label">Books</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ currently_borrowed }}</div>
+    <div class="stat-label">Borrowed</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" style="color:var(--danger)">{{ overdue_count }}</div>
+    <div class="stat-label">Overdue</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" style="color:var(--warning)">₹{{ total_fine_outstanding }}</div>
+    <div class="stat-label">Fines Due</div>
+  </div>
+</div>
+
+<!-- Two-column: recent activity (left) + overdue panel (right) -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+
+  <div class="card">
+    <div class="card-header">Recent Activity</div>
+    {% if recent_activity %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Student</th><th>Book</th><th>Date</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for record in recent_activity %}
+            <tr>
+              <td>
+                <span style="font-size:0.85rem;font-weight:500">{{ record.student.get_full_name }}</span><br>
+                <span style="font-size:0.75rem;color:var(--text-muted)">
+                  {{ record.student.student_profile.roll_number }}
+                </span>
+              </td>
+              <td style="font-size:0.82rem;">{{ record.book.title|truncatechars:30 }}</td>
+              <!-- |truncatechars:30: cuts at 30 chars, adds "…" — prevents layout breaks -->
+              <td style="font-size:0.8rem;color:var(--text-secondary);">{{ record.borrowed_date }}</td>
+              <td>
+                {% if record.is_returned %}
+                  <span class="badge badge-green">Returned</span>
+                {% elif record.due_date < today %}
+                  <span class="badge badge-red">Overdue</span>
+                {% else %}
+                  <span class="badge badge-orange">Active</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:1rem;">
+        <a href="{% url 'circulation:all_records' %}" class="btn btn-secondary btn-sm" style="width:auto;">
+          View All Records →
+        </a>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">No activity yet.</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header" style="color:var(--danger);">⚠ Overdue Books ({{ overdue_count }})</div>
+    {% if overdue_records %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Student</th><th>Book</th><th>Days Over</th></tr>
+          </thead>
+          <tbody>
+            {% for record in overdue_records %}
+            <tr>
+              <td>
+                <span style="font-size:0.85rem;font-weight:500">{{ record.student.get_full_name }}</span><br>
+                <span style="font-size:0.75rem;color:var(--text-muted)">
+                  {{ record.student.student_profile.roll_number }}
+                </span>
+              </td>
+              <td style="font-size:0.82rem;">{{ record.book.title|truncatechars:28 }}</td>
+              <td><span class="badge badge-red">{{ record.days_overdue }}d</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:1rem;">
+        <a href="{% url 'librarian:overdue_alerts' %}" class="btn btn-secondary btn-sm" style="width:auto;">
+          View All Overdue →
+        </a>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <div class="empty-state-text">No overdue books. All good!</div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Quick actions -->
+<div style="display:flex; gap:1rem; margin-top:1.5rem; flex-wrap:wrap;">
+  <a href="{% url 'circulation:issue_book' %}"   class="btn btn-primary"   style="width:auto;">Issue a Book</a>
+  <a href="{% url 'circulation:all_records' %}"  class="btn btn-secondary" style="width:auto;">All Records</a>
+  <a href="{% url 'librarian:student_lookup' %}" class="btn btn-secondary" style="width:auto;">Student Lookup</a>
+  <a href="{% url 'librarian:inventory' %}"      class="btn btn-secondary" style="width:auto;">Inventory</a>
+</div>
+
+{% endblock %}

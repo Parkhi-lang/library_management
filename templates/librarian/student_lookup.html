@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Student Lookup — LibraryOS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">Student Lookup</h1>
+  <p class="page-subtitle">Search by roll number to view a student's full record</p>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+  <form class="search-form" method="get" action="" style="margin-bottom:0;">
+    <input class="search-input" type="text" name="roll" value="{{ roll_number }}"
+           placeholder="Enter roll number e.g. CS2022001" autofocus autocomplete="off">
+    <!-- name="roll" → URL ?roll=... — value="{{ roll_number }}" pre-fills from last search -->
+    <button type="submit" class="search-btn">Look Up</button>
+  </form>
+</div>
+
+{% if roll_number %}
+  {% if student %}
+
+    <div class="profile-card" style="margin-bottom:1.5rem;">
+      <div class="profile-avatar">{{ student.first_name|make_list|first|upper }}</div>
+      <div style="flex:1;">
+        <div class="profile-name">{{ student.get_full_name }}</div>
+        <div class="profile-meta">@{{ student.username }} · {{ student.email }}</div>
+        <div class="profile-tags">
+          <span class="tag tag-green">{{ profile.roll_number }}</span>
+          <span class="tag tag-blue">{{ profile.branch }}</span>
+          <span class="tag tag-blue">Semester {{ profile.semester }}</span>
+        </div>
+      </div>
+      {% if total_fine > 0 %}
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;">
+          Outstanding Fine
+        </div>
+        <div style="font-size:1.75rem;font-weight:700;color:var(--warning);font-family:var(--font-display);">
+          ₹{{ total_fine }}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem;">
+      <div class="stat-card">
+        <div class="stat-number">{{ active_borrows|length }}</div>
+        <div class="stat-label">Currently Borrowed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ past_borrows|length }}</div>
+        <div class="stat-label">Total History</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" style="color:var(--warning)">₹{{ total_fine }}</div>
+        <div class="stat-label">Unpaid Fine</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-header">Currently Borrowed ({{ active_borrows|length }})</div>
+      {% if active_borrows %}
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Book</th><th>Author</th><th>Borrowed On</th>
+                <th>Due Date</th><th>Status</th><th>Fine Preview</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in active_borrows %}
+              <tr>
+                <td><span style="font-weight:500">{{ record.book.title }}</span></td>
+                <td style="color:var(--text-secondary);font-size:0.85rem;">{{ record.book.author }}</td>
+                <td style="color:var(--text-secondary);font-size:0.85rem;">{{ record.borrowed_date }}</td>
+                <td>
+                  {% if record.due_date < today %}
+                    <span style="color:var(--danger);font-weight:500">{{ record.due_date }}</span>
+                  {% else %}{{ record.due_date }}{% endif %}
+                </td>
+                <td>
+                  {% if record.days_overdue > 0 %}
+                    <span class="badge badge-red">Overdue {{ record.days_overdue }}d</span>
+                  {% else %}
+                    <span class="badge badge-green">On Time</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if record.current_fine_if_returned_today > 0 %}
+                    <span style="color:var(--warning);font-weight:600;">
+                      ~₹{{ record.current_fine_if_returned_today }}
+                    </span>
+                  {% else %}
+                    <span style="color:var(--text-muted)">₹0</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{% url 'circulation:return_book' record.id %}"
+                     class="btn btn-sm btn-secondary"
+                     onclick="return confirm('Mark as returned?')">Return</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding:1.5rem;">
+          <div class="empty-state-text">No active borrows.</div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-header">Borrow History ({{ past_borrows|length }})</div>
+      {% if past_borrows %}
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Book</th><th>Borrowed</th><th>Returned</th><th>Fine</th><th>Paid</th></tr>
+            </thead>
+            <tbody>
+              {% for record in past_borrows %}
+              <tr>
+                <td>{{ record.book.title }}</td>
+                <td style="color:var(--text-secondary);font-size:0.85rem;">{{ record.borrowed_date }}</td>
+                <td style="color:var(--text-secondary);font-size:0.85rem;">{{ record.returned_date }}</td>
+                <td>
+                  {% if record.fine_amount > 0 %}
+                    <span style="color:var(--warning)">₹{{ record.fine_amount }}</span>
+                  {% else %}<span style="color:var(--text-muted)">₹0</span>{% endif %}
+                </td>
+                <td>
+                  {% if record.fine_amount == 0 %}<span class="badge badge-green">No Fine</span>
+                  {% elif record.fine_paid %}<span class="badge badge-green">Paid</span>
+                  {% else %}<span class="badge badge-red">Unpaid</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding:1.5rem;">
+          <div class="empty-state-text">No borrow history.</div>
+        </div>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-text">
+          No student found with roll number
+          "<strong style="color:var(--accent)">{{ roll_number }}</strong>"
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Issue Book — LibraryOS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">Issue a Book</h1>
+  <p class="page-subtitle">Enter the student's roll number and book ISBN</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;">
+
+  <div class="card">
+    <div class="card-header">Issue Form</div>
+    <form method="post" action="">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Student Roll Number</label>
+        <input type="text" name="roll_number" class="form-input"
+               placeholder="e.g. CS2022001" required autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Book ISBN</label>
+        <input type="text" name="isbn" class="form-input"
+               placeholder="e.g. 9780262033848" required autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Due In (Days)</label>
+        <select name="due_days" class="form-select">
+          <option value="7">7 days</option>
+          <option value="14" selected>14 days (default)</option>
+          <option value="21">21 days</option>
+          <option value="30">30 days</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">
+        Issue Book
+      </button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Available Books ({{ available_books|length }})</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Title</th><th>ISBN</th><th>Copies</th></tr>
+        </thead>
+        <tbody>
+          {% for book in available_books %}
+          <tr>
+            <td style="font-size:0.82rem;">{{ book.title }}</td>
+            <td>
+              <span style="font-family:monospace;font-size:0.82rem;color:var(--accent);cursor:pointer;"
+                onclick="document.querySelector('input[name=isbn]').value='{{ book.isbn }}'"
+                title="Click to fill ISBN">
+                {{ book.isbn }}
+              </span>
+              <!-- onclick fills the ISBN field — one line of JS, no library needed -->
+            </td>
+            <td><span class="badge badge-green">{{ book.available_copies }}</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" style="text-align:center;color:var(--text-muted);padding:2rem;">
+              No books available.
+            </td>
+          </tr>
+          {% endfor %}
+          <!-- {% empty %} renders when the for loop has no items -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

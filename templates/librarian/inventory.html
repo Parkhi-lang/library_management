@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Inventory — LibraryOS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">Book Inventory</h1>
+  <p class="page-subtitle">Add books and manage copy counts</p>
+</div>
+
+<!-- Two-column: sticky add form (left) + book table (right) -->
+<div style="display:grid; grid-template-columns:320px 1fr; gap:1.5rem; align-items:start;">
+
+  <div class="card" style="position:sticky; top:80px;">
+    <!-- position:sticky: stays visible while scrolling through the book list -->
+    <div class="card-header">Add New Book</div>
+    <form method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <!-- Hidden field tells the view which action to perform -->
+
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input type="text" name="title" class="form-input" placeholder="Book title" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Author *</label>
+        <input type="text" name="author" class="form-input" placeholder="Author name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ISBN *</label>
+        <input type="text" name="isbn" class="form-input" placeholder="13-digit ISBN" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <input type="text" name="category" class="form-input" placeholder="e.g. Computer Science">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Number of Copies</label>
+        <input type="number" name="copies" class="form-input" value="1" min="1" max="100">
+      </div>
+      <button type="submit" class="btn btn-primary">Add Book</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">All Books ({{ books|length }})</div>
+    {% if books %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th><th>Author</th><th>ISBN</th><th>Category</th>
+              <th>Total</th><th>Available</th><th>Times Borrowed</th><th>Update</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for book in books %}
+            <tr>
+              <td><span style="font-weight:500">{{ book.title }}</span></td>
+              <td style="color:var(--text-secondary);font-size:0.85rem;">{{ book.author }}</td>
+              <td style="font-family:monospace;font-size:0.8rem;color:var(--text-muted);">{{ book.isbn }}</td>
+              <td>
+                {% if book.category %}
+                  <span class="tag tag-blue" style="font-size:0.72rem;">{{ book.category }}</span>
+                {% else %}<span style="color:var(--text-muted)">—</span>{% endif %}
+              </td>
+              <td style="text-align:center;font-weight:600;">{{ book.total_copies }}</td>
+              <td style="text-align:center;">
+                {% if book.available_copies == 0 %}
+                  <span class="badge badge-red">0</span>
+                  <!-- All copies borrowed out -->
+                {% elif book.available_copies < book.total_copies %}
+                  <span class="badge badge-orange">{{ book.available_copies }}</span>
+                  <!-- Partially available -->
+                {% else %}
+                  <span class="badge badge-green">{{ book.available_copies }}</span>
+                  <!-- All available -->
+                {% endif %}
+              </td>
+              <td style="text-align:center;color:var(--text-secondary);">
+                {{ book.times_borrowed }}
+                <!-- Annotated by Count() in the view — zero extra DB queries -->
+              </td>
+              <td>
+                <!-- Inline form per row — different book_id hidden field each time -->
+                <form method="post" action="" style="display:flex;gap:0.4rem;align-items:center;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action"      value="update_copies">
+                  <input type="hidden" name="book_id"     value="{{ book.id }}">
+                  <input type="number" name="total_copies" value="{{ book.total_copies }}"
+                         min="1" max="999" class="form-input"
+                         style="width:70px;padding:0.4rem 0.5rem;font-size:0.85rem;">
+                  <button type="submit" class="btn btn-sm btn-secondary">Save</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <div class="empty-state-text">No books yet. Add one using the form.</div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

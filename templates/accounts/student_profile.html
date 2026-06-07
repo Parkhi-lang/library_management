@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile — LibraryOS{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="page-header">
+  <h1 class="page-title">My Library Profile</h1>
+  <p class="page-subtitle">Overview of your borrowings and dues</p>
+</div>
+
+<!-- Profile card — avatar initial + name + detail tags -->
+<div class="profile-card">
+  <div class="profile-avatar">
+    <!--
+      Get the first letter of the student's first name for the avatar.
+      make_list converts the string to a list of characters so we can
+      use |first to grab index 0. This is a CSS avatar — no image needed.
+    -->
+    {{ user.first_name|make_list|first|upper }}
+  </div>
+  <div>
+    <div class="profile-name">{{ user.get_full_name }}</div>
+    <div class="profile-meta">@{{ user.username }} &nbsp;·&nbsp; {{ user.email }}</div>
+    <div class="profile-tags">
+      <span class="tag tag-blue">{{ profile.branch }}</span>
+      <span class="tag tag-blue">Semester {{ profile.semester }}</span>
+      <span class="tag tag-green">{{ profile.roll_number }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Fine banner — only shown if there are unpaid fines -->
+{% if total_fine > 0 %}
+<div class="fine-banner">
+  <span class="fine-banner-icon">⚠️</span>
+  <div class="fine-banner-text">
+    <div class="fine-banner-label">Outstanding Fine</div>
+    <div class="fine-banner-amount">₹{{ total_fine }}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Stats row -->
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:2rem;">
+  <div class="stat-card">
+    <div class="stat-number">{{ borrowed_books|length }}</div>
+    <div class="stat-label">Books Borrowed</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" style="color: var(--warning)">₹{{ total_fine }}</div>
+    <div class="stat-label">Pending Fine</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ profile.semester }}</div>
+    <div class="stat-label">Current Semester</div>
+  </div>
+</div>
+
+<!-- Currently borrowed books table -->
+<div class="card">
+  <div class="card-header">Currently Borrowed Books</div>
+
+  {% if borrowed_books %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Book Title</th>
+            <th>Author</th>
+            <th>Borrowed On</th>
+            <th>Due Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in borrowed_books %}
+          <tr>
+            <td>{{ record.book.title }}</td>
+            <td style="color:var(--text-secondary)">{{ record.book.author }}</td>
+            <td style="color:var(--text-secondary)">{{ record.borrowed_date }}</td>
+            <td>{{ record.due_date }}</td>
+            <td>
+              <!--
+                days_overdue is a method on BorrowRecord.
+                Django templates call methods without parentheses — {{ record.days_overdue }}
+                automatically calls days_overdue() because Django checks for callable.
+              -->
+              {% if record.days_overdue > 0 %}
+                <span class="badge badge-red">Overdue {{ record.days_overdue }}d</span>
+              {% else %}
+                <span class="badge badge-green">On Time</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📚</div>
+      <div class="empty-state-text">No books currently borrowed</div>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}
